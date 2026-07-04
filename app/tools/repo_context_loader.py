@@ -1,4 +1,7 @@
-from app.mcp.github_mcp import GitHubMCP
+from app.mcp.github_mcp import GitHubMCP, GitHubMCPError
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class RepoContextLoader:
@@ -18,9 +21,12 @@ class RepoContextLoader:
         context = {}
 
         for file in important_files:
-            content = self.mcp.get_file(repo, file)
-
-            if content:
-                context[file] = content
+            try:
+                content = self.mcp.get_file(repo, file)
+                if content is not None:
+                    context[file] = content
+            except GitHubMCPError as e:
+                logger.warning(f"Failed to load file {file} from repository {repo}: {e}")
+                continue
 
         return context

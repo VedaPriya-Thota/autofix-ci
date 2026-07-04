@@ -1,17 +1,38 @@
 import json
-import google.generativeai as genai
+import logging
+from typing import Any
+
 from app.config import config
 from app.schemas import RootCauseSchema
 
+logger = logging.getLogger(__name__)
+
 
 class RootCauseAgent:
+    def __init__(self) -> None:
+        self.model: Any | None = None
+        self._initialize_model()
 
-    def __init__(self):
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(config.GEMINI_MODEL)
+    def _initialize_model(self) -> None:
+        if not config.GEMINI_API_KEY:
+            return
 
-    def run(self, structured_logs):
+        try:
+            import google.generativeai as genai
 
+            genai.configure(api_key=config.GEMINI_API_KEY)
+            self.model = genai.GenerativeModel(config.GEMINI_MODEL)
+        except Exception:
+            self.model = None
+
+    def run(self, structured_logs: Any) -> RootCauseSchema:
+        if self.model is None:
+            logger.warning("Root cause agent unavailable; using fallback")
+            return RootCauseSchema(
+                cause="unknown",
+                confidence=0.3,
+                explanation="root cause agent unavailable; using fallback",
+            )
         prompt = f"""
 You are a senior DevOps engineer.
 
@@ -38,15 +59,12 @@ Rules:
             text = response.text.strip().replace("```json", "").replace("```", "")
 
             data = json.loads(text)
-
-            # 🧠 STRICT VALIDATION (IMPORTANT FOR KAGGLE)
             validated = RootCauseSchema(**data)
-
-            return validated.model_dump()
+            return validated
 
         except Exception as e:
-            return {
-                "cause": "unknown",
-                "confidence": 0.3,
-                "explanation": f"validation failed: {str(e)}"
-            }
+            return RootCauseSchema(
+                cause="unknown",
+                confidence=0.3,
+                explanation=f"validation failed: {str(e)}"
+            )

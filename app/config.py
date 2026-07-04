@@ -15,6 +15,9 @@ class Config:
     # Optional: future extensions
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
+    # GitHub webhook secret for signature verification
+    GITHUB_WEBHOOK_SECRET = os.getenv("GITHUB_WEBHOOK_SECRET")
+
     # Model configuration
     GEMINI_MODEL = "gemini-1.5-flash"
 

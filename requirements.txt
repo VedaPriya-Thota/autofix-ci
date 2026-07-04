@@ -5,3 +5,6 @@ requests
 gitpython
 python-dotenv
 networkx
+google-generativeai
+langgraph
+PyGithub
