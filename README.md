@@ -21,6 +21,7 @@
 ## 📚 Table of Contents
 
 - [Overview](#-overview)
+- [Course Concepts Demonstrated](#-course-concepts-demonstrated)
 - [Problem Statement](#-problem-statement)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
@@ -36,6 +37,7 @@
 - [Screenshots](#-screenshots)
 - [Testing](#-testing)
 - [Security](#-security)
+- [Known Issues](#-known-issues)
 - [Roadmap](#-roadmap)
 - [Contributing](#-contributing)
 - [Acknowledgements](#-acknowledgements)
@@ -48,6 +50,19 @@
 Modern software teams rely heavily on Continuous Integration pipelines, but when builds fail, developers lose significant time inspecting logs, reproducing failures, writing fixes, validating them, and opening pull requests.
 
 **AutoFix CI** automates this entire debugging loop using a coordinated team of AI agents that fetch logs, understand repository context, diagnose root causes, generate patches, validate them, and ship a pull request — all with a live dashboard to watch it happen.
+
+## 🧠 Course Concepts Demonstrated
+
+AutoFix CI was built as part of Google & Kaggle's 5-Day AI Agents Intensive Course, and applies the following key concepts covered in the course:
+
+| Concept | Where Demonstrated | Details |
+|---|---|---|
+| **Multi-Agent System** | Code (`app/agents/`) | A custom Python orchestrator coordinates five single-responsibility agents (Log Fetcher, Root Cause, Repair, Validation, PR Creator), each passing structured output to the next stage. |
+| **MCP Server** | Code (`app/mcp/`) | `GitHubMCP` implements the Model Context Protocol to give agents structured access to repository content — raw file retrieval, Base64 fallback decoding, and binary detection — rather than ad-hoc API calls. |
+| **Security Features** | Code (`app/integrations/`, `app/mcp/`) | HMAC-SHA256 webhook signature verification with constant-time comparison, canonical path validation to prevent traversal attacks, safe ZIP extraction, and a custom exception hierarchy for graceful failure handling. |
+| **Antigravity** | Video | Google's Antigravity IDE was used during development to accelerate agent scaffolding and iteration — shown in the submission video. |
+
+> **Note:** The multi-agent orchestration in this project uses a custom Python workflow engine rather than Google's Agent Development Kit (ADK). The agent design principles (single-responsibility agents, structured handoffs, sequential reasoning) follow the same patterns taught in the course.
 
 ## 🧩 Problem Statement
 
@@ -296,6 +311,8 @@ ENVIRONMENT=development
 LOG_LEVEL=INFO
 ```
 
+> ⚠️ **Never commit your `.env` file or real credentials.** This repository's `.gitignore` excludes `.env`, and no API keys, tokens, or secrets are included anywhere in the codebase or commit history.
+
 ## 📡 API Documentation
 
 | Method | Endpoint | Description |
@@ -320,15 +337,15 @@ curl -X POST http://localhost:8000/analyze \
 
 ## 🖼️ Screenshots
 
-> _Add screenshots or GIFs of the dashboard below._
-
-| Dashboard Overview | Agent Activity |
+| Dashboard Overview | Agent Activity (PyTest Sample) |
 |---|---|
-| ![Dashboard Overview](docs/screenshots/dashboard-overview.png) | ![Agent Activity](docs/screenshots/agent-activity.png) |
+| ![Dashboard Overview](docs/screenshots/dashboard-overview.png) | ![Agent Activity](docs/screenshots/agent-activity-pytest.png) |
 
-| Patch Viewer | Pull Request Preview |
-|---|---|
-| ![Patch Viewer](docs/screenshots/patch-viewer.png) | ![PR Preview](docs/screenshots/pr-preview.png) |
+| Idle State |
+|---|
+| ![Dashboard Idle](docs/screenshots/dashboard-idle.png) |
+
+> 📌 **Patch Viewer** and **Pull Request Preview** screenshots are pending a full end-to-end run (patch generation currently blocked by a Gemini model configuration issue — see [Known Issues](#-known-issues)). These will be added once a successful run produces a real patch and PR.
 
 ## 🧪 Testing
 
@@ -362,6 +379,10 @@ AutoFix CI implements the following safeguards when interacting with GitHub:
 - Invalid ZIP archive detection
 - Custom exception hierarchy for graceful failure handling
 - UTF-8 normalization of all fetched content
+
+## 🐞 Known Issues
+
+- **Gemini model configuration**: The current deployment references a model string (`gemini-1.5-flash`) that returns a `404` on the `v1beta` API endpoint used by the Repair/Root Cause agents, which prevents patch generation from completing on some runs. Workflow orchestration and status reporting continue to report stage completion even when this underlying call fails — a fix is in progress to (1) update the model reference to a currently supported Gemini model, and (2) surface upstream API failures as a distinct workflow status rather than a generic "completed" state.
 
 ## 🗺️ Roadmap
 
@@ -433,6 +454,7 @@ Please follow existing code style and include relevant tests and documentation u
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [GitHub REST API](https://docs.github.com/en/rest) and [GitHub Actions](https://github.com/features/actions) for CI/CD integration
 - [Gemini](https://ai.google.dev/) for LLM-based reasoning
+- [Google Antigravity](https://antigravity.google/) for accelerating agent development during the build process
 - The broader open-source community for tools and inspiration
 
 ## 📄 License
